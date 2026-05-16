@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sukhothai Time Explorer - เกมแยกหมวดหมู่มรดกโลก</title>
+    <style>
+        :root {
+            --theme-dark: #6B1111;
+            --theme-gold: #DAA520;
+            --theme-light: #F9F6F0;
+            --btn-blue: #2E5B88;
+            --btn-green: #3B7A57;
+            --btn-orange: #D96B27;
+        }
+
+        body {
+            font-family: 'Sarabun', system-ui, -apple-system, sans-serif;
+            background-color: var(--theme-light);
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .game-card {
+            background: #ffffff;
+            border-radius: 24px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+            padding: 30px;
+            max-width: 550px;
+            width: 100%;
+            text-align: center;
+            border: 4px solid var(--theme-gold);
+            position: relative;
+        }
+
+        h1 {
+            color: var(--theme-dark);
+            margin-top: 0;
+            font-size: 26px;
+            font-weight: bold;
+        }
+
+        .timer-bar-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            height: 12px;
+            border-radius: 6px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+
+        .timer-bar {
+            width: 100%;
+            height: 100%;
+            background-color: #FF4500;
+            transition: width 0.1s linear;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            font-size: 16px;
+            background: #f0f0f0;
+            padding: 8px 15px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+        }
+
+        .flashcard {
+            background: linear-gradient(135deg, var(--theme-dark), #4A0A0A);
+            color: #ffffff;
+            font-size: 32px;
+            font-weight: bold;
+            padding: 40px 20px;
+            border-radius: 18px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 20px rgba(107,17,17,0.3);
+            letter-spacing: 1px;
+            min-height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            transition: transform 0.3s;
+        }
+
+        .flashcard .thai-hint {
+            font-size: 16px;
+            font-weight: normal;
+            color: #FFD700;
+            margin-top: 10px;
+        }
+
+        .category-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .cat-btn {
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: transform 0.1s, filter 0.2s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            text-align: left;
+            display: flex;
+            align-items: center;
+        }
+
+        .cat-btn::before {
+            content: "➔";
+            margin-right: 12px;
+            font-size: 18px;
+        }
+
+        .cat-btn:hover {
+            filter: brightness(1.1);
+            transform: translateY(-2px);
+        }
+
+        .cat-btn:active {
+            transform: translateY(1px);
+        }
+
+        .btn-places { background-color: var(--btn-blue); }
+        .btn-crafts { background-color: var(--btn-green); }
+        .btn-traditions { background-color: var(--btn-orange); }
+
+        .score-pop {
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 15px;
+            min-height: 30px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-card" id="game-box">
+    <h1>🧭 สุโขทัย ไทม์เอกซ์พลอเรอร์ 🧭</h1>
+    <p style="color: #555; font-size: 14px; margin-top: -5px;">ฟังเพลงจากคลิปแล้วเลือกหมวดหมู่ให้ตรงกับคำศัพท์ภาษาอังกฤษ</p>
+
+    <div class="stats">
+        <div id="score">คะแนน: 0</div>
+        <div id="combo">ความเร็วต่อเนื่อง x1</div>
+    </div>
+
+    <div class="timer-bar-container">
+        <div class="timer-bar" id="timer"></div>
+    </div>
+
+    <div class="flashcard" id="word-display">
+        Sukhothai
+        <div class="thai-hint">(คำแปลภาษาไทย)</div>
+    </div>
+
+    <div class="category-container">
+        <button class="cat-btn btn-places" onclick="submitAnswer('places')">Historical Places (สถานที่ทางประวัติศาสตร์)</button>
+        <button class="cat-btn btn-crafts" onclick="submitAnswer('crafts')">Local Food & Crafts (อาหารและของดีท้องถิ่น)</button>
+        <button class="cat-btn btn-traditions" onclick="submitAnswer('traditions')">Festivals & Traditions (เทศกาลและประเพณี)</button>
+    </div>
+
+    <div class="score-pop" id="feedback"></div>
+</div>
+
+<script>
+    const itemBank = [
+        { eng: "Wat Mahathat", th: "วัดมหาธาตุ", cat: "places" },
+        { eng: "Wat Si Chum", th: "วัดศรีชุม (พระพูดได้)", cat: "places" },
+        { eng: "Khao Luang", th: "อุทยานแห่งชาติเขาหลวง", cat: "places" },
+        { eng: "Sangkhalok", th: "เครื่องปั้นดินเผาสังคโลก", cat: "crafts" },
+        { eng: "Tin Chok Cloth", th: "ผ้าทอตีนจกเก้าลาย", cat: "crafts" },
+        { eng: "Sukhothai Noodles", th: "ก๋วยเตี๋ยวสุโขทัยแสนอร่อย", cat: "crafts" },
+        { eng: "Loi Krathong", th: "ประเพณีลอยกระทง เผาเทียนเล่นไฟ", cat: "traditions" },
+        { eng: "Elephant Ordination", th: "ประเพณีแห่ช้างบวชนาคหาดเสี้ยว", cat: "traditions" },
+        { eng: "Song Nam Oi Tan", th: "ประเพณีสรงน้ำโอยทาน สงกรานต์ศรีสัชนาลัย", cat: "traditions" }
+    ];
+
+    let currentItem;
+    let score = 0;
+    let combo = 1;
+    let timeLeft = 100;
+    let timerId;
+    let roundCount = 0;
+    const maxRounds = 10;
+
+    function initAudio() {
+        window.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    function playTone(freq, duration, type) {
+        if (!window.audioCtx) initAudio();
+        try {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        } catch(e) {}
+    }
+
+    function nextItem() {
+        if (roundCount >= maxRounds) {
+            endGame();
+            return;
+        }
+        
+        roundCount++;
+        currentItem = itemBank[Math.floor(Math.random() * itemBank.length)];
+        
+        document.getElementById("word-display").innerHTML = `
+            ${currentItem.eng}
+            <div class="thai-hint">${currentItem.th}</div>
+        `;
+        document.getElementById("feedback").innerText = "";
+        
+        clearInterval(timerId);
+        timeLeft = 100;
+        startTimer();
+    }
+
+    function startTimer() {
+        const timerBar = document.getElementById("timer");
+        timerId = setInterval(() => {
+            timeLeft -= 1.5;
+            timerBar.style.width = timeLeft + "%";
+            
+            if (timeLeft <= 0) {
+                clearInterval(timerId);
+                combo = 1;
+                document.getElementById("combo").innerText = `ความเร็วต่อเนื่อง x${combo}`;
+                document.getElementById("feedback").innerHTML = "<span style='color:orange;'>หมดเวลาข้อนี้! ⏳</span>";
+                setTimeout(nextItem, 1200);
+            }
+        }, 100);
+    }
+
+    function submitAnswer(chosenCat) {
+        if (!currentItem) return;
+        clearInterval(timerId);
+
+        const feedback = document.getElementById("feedback");
+        
+        if (chosenCat === currentItem.cat) {
+            playTone(523.25, 0.4, 'sine');
+            let pointsEarned = 10 * combo;
+            score += pointsEarned;
+            feedback.innerHTML = `<span style='color:green;'>เก่งมาก! ถูกต้อง +${pointsEarned} คะแนน 🎉</span>`;
+            combo++;
+        } else {
+            playTone(196.00, 0.3, 'sawtooth');
+            feedback.innerHTML = "<span style='color:red;'>ยังไม่ถูกนะ ลองทบทวนจากในคลิปดูอีกที! ❌</span>";
+            combo = 1;
+        }
+
+        document.getElementById("score").innerText = `คะแนน: ${score}`;
+        document.getElementById("combo").innerText = `ความเร็วต่อเนื่อง x${combo}`;
+        
+        setTimeout(nextItem, 1200);
+    }
+
+    function endGame() {
+        clearInterval(timerId);
+        const gameBox = document.getElementById("game-box");
+        let evaluation = "พยายามได้ดีมากครับ! ลองกลับไปฟังเพลงในคลิปอีกรอบเพื่อความแม่นยำนะ";
+        if (score >= 150) evaluation = "สุดยอดนักสำรวจประวัติศาสตร์สุโขทัย! ความจำดีเยี่ยมระดับมรดกโลก 👑";
+        else if (score >= 80) evaluation = "ผ่านเกณฑ์เก่งมากครับ! เริ่มเข้าใจความหมายของคำศัพท์วัฒนธรรมแล้ว";
+
+        gameBox.innerHTML = `
+            <h1 style="font-size: 32px;">🏁 จบการสำรวจเวลา 🏁</h1>
+            <p style="font-size: 18px; margin: 20px 0;">คะแนนรวมมัลติมีเดียควิซของนักเรียน</p>
+            <div style="font-size: 54px; font-weight: bold; color: var(--theme-dark); margin-bottom: 20px;">${score} คะแนน</div>
+            <p style="font-size: 16px; color: #444; padding: 0 10px; line-height: 1.6;">${evaluation}</p>
+            <button onclick="location.reload()" style="background-color: var(--theme-gold); color: white; border:none; padding:15px 35px; font-size:18px; border-radius:30px; cursor:pointer; font-weight:bold; box-shadow:0 4px 10px rgba(0,0,0,0.15); margin-top:15px;">เล่นอีกครั้ง</button>
+        `;
+    }
+
+    window.onload = () => {
+        document.body.addEventListener('click', initAudio, { once: true });
+        nextItem();
+    };
+</script>
+
+</body>
+</html>
